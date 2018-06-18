@@ -4,7 +4,36 @@ import random as random
 import numpy as np
 from scipy import stats
 import matplotlib.pyplot as plt
-import stats_utils as utils
+from collections import Counter
+
+
+def single_queue_multiple_servants_simulation(n_customers, n_servers):
+    mean_time_between_customers = 1
+    mean_service_time = 8
+    waiting_times = []
+    arrival_dist = stats.expon.rvs(size=n_customers, scale=mean_time_between_customers)
+    service_dist = stats.expon.rvs(size=n_customers, scale=mean_service_time)
+    
+    servers = [0 for _ in range(n_servers)]
+    arrival_time = 0
+    
+    for i in range(n_customers):
+        waiting_time = 0
+        arrival_time = arrival_time + arrival_dist[i]
+        
+        server = min(servers)
+        
+        if server > arrival_time:
+            waiting_time = server - arrival_time
+            server = server + service_dist[i]
+        else:
+            server = arrival_time + service_dist[i]
+        
+        servers[servers.index(server)] = server
+        waiting_times.append(waiting_time)
+        
+    return waiting_times
+        
     
 
 def queue_simulation(n_su, mst, mtbc, n_customers, arrival_dist, service_time_dist):
@@ -98,24 +127,35 @@ def main():
     n_customers = 10000
     
     #Simulation for when the arrival process is modelled as a Poisson process
-    event_simulation_poisson_arrival(n_service_units, mean_service_time, mean_time_between_customers, n_simulations, n_customers)
+    #event_simulation_poisson_arrival(n_service_units, mean_service_time, mean_time_between_customers, n_simulations, n_customers)
     
     #Simulation with a renewal process using Erlang distributed inter arrival times
-    event_simulation_erlang_arrival(n_service_units, mean_service_time, mean_time_between_customers, n_simulations, n_customers)
+    #event_simulation_erlang_arrival(n_service_units, mean_service_time, mean_time_between_customers, n_simulations, n_customers)
     
     #Simulation with a renewal process using hyper exponential inter arrival times
-    event_simulation_hyper_exponential_arrival(n_service_units, mean_service_time, mean_time_between_customers, n_simulations, n_customers)
+    #event_simulation_hyper_exponential_arrival(n_service_units, mean_service_time, mean_time_between_customers, n_simulations, n_customers)
     
     #Simulation with constant service time
-    event_simulation_constant_service(n_service_units, mean_service_time, mean_time_between_customers, n_simulations, n_customers)
+    #event_simulation_constant_service(n_service_units, mean_service_time, mean_time_between_customers, n_simulations, n_customers)
     
     #Simulation with Pareto distributed service times
-    event_simulation_pareto_service(n_service_units, mean_service_time, mean_time_between_customers, n_simulations, n_customers)
+    #event_simulation_pareto_service(n_service_units, mean_service_time, mean_time_between_customers, n_simulations, n_customers)
     
     #Simulation with distributions of our own choice
-    event_simulation_own_choice(n_service_units, mean_service_time, mean_time_between_customers, n_simulations, n_customers)
+    #event_simulation_own_choice(n_service_units, mean_service_time, mean_time_between_customers, n_simulations, n_customers)
     
     #Exact solution
     print("Exact solution, percentage of blocked customers: {} %".format(erlang_B_formula(n_service_units, mean_time_between_customers, mean_service_time)* 100))
+    
+    
+    waiting_times = single_queue_multiple_servants_simulation(10000, 10)
+    print(Counter(waiting_times))
+    
+    plt.hist(waiting_times)
+    
+    
+    
+    
+    
 if __name__ == "__main__":
     main()
