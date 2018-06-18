@@ -74,7 +74,7 @@ def main():
     print("Upper limit: {}".format(wait_time_upper))
 
     print("\n")
-    print("Mean blocking rate: {}".format(np.mean(blocked_means)))
+    print("Probability of waiting: {}".format(np.mean(blocked_means)))
     print("Lower limit: {}".format(blocked_lower))
     print("Upper limit: {}".format(blocked_upper))
     
