@@ -150,9 +150,14 @@ def main():
     
     
     waiting_times = single_queue_multiple_servants_simulation(10000, 10)
-    print(Counter(waiting_times))
+    waiting_times_stip_zeros = [i for i in waiting_times if i > 0]
     
-    plt.hist(waiting_times)
+    plt.hist(waiting_times_stip_zeros,  alpha=0.5)
+    plt.title("Distribution of waiting times")
+    plt.legend(loc='upper right')
+    plt.xlabel("Waiting times")
+    plt.ylabel("Frequency")
+    plt.show()
     
     
     
