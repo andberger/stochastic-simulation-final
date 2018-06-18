@@ -40,17 +40,12 @@ def calculate_confidence_intervals(mean, standard_deviation, n_simulations):
     lower = mean - z_s * (standard_deviation/sqrt(n_simulations))
     upper = mean + z_s * (standard_deviation/sqrt(n_simulations))
     return (lower, upper)
-        
-def erlang_B_formula(n, arrival_intensity, mean_service_time):
-    A = arrival_intensity * mean_service_time
-    B = ((A**n) / (factorial(n))) / (sum([((A**i)/factorial(i)) for i in range(n)]))
-    return B  
     
 
 def main():    
     # Single queue multiple servers    
     waiting_times = single_queue_multiple_servers_simulation(10000, 10)
-    waiting_times_stip_zeros = [i for i in waiting_times if i > 0]
+    waiting_times_strip_zeros = [i for i in waiting_times if i > 0]
     
     plt.hist(waiting_times_stip_zeros,  alpha=0.5)
     plt.title("Distribution of waiting times")
