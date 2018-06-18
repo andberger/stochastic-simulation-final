@@ -4,7 +4,7 @@ import random as random
 import numpy as np
 from scipy import stats
 import matplotlib.pyplot as plt
-import stats_utils as utils
+#import stats_utils as utils
     
 
 def queue_simulation(n_su, mst, mtbc, n_customers, arrival_dist, service_time_dist):
