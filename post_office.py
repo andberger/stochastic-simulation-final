@@ -4,13 +4,7 @@ import random as random
 import numpy as np
 from scipy import stats
 import matplotlib.pyplot as plt
-<<<<<<< HEAD
-#import stats_utils as utils
-    
-=======
 from collections import Counter
->>>>>>> cb31f96db8c2a698d769ba737bdd5c4ded34432e
-
 
 def single_queue_multiple_servers_simulation(n_customers, n_servers):
     mean_time_between_customers = 1
