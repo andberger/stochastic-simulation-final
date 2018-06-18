@@ -22,6 +22,7 @@ def single_queue_multiple_servants_simulation(n_customers, n_servers):
         arrival_time = arrival_time + arrival_dist[i]
         
         server = min(servers)
+        server_index = servers.index(server)
         
         if server > arrival_time:
             waiting_time = server - arrival_time
@@ -29,7 +30,7 @@ def single_queue_multiple_servants_simulation(n_customers, n_servers):
         else:
             server = arrival_time + service_dist[i]
         
-        servers[servers.index(server)] = server
+        servers[server_index] = server
         waiting_times.append(waiting_time)
         
     return waiting_times
