@@ -14,12 +14,22 @@ mean_time_between_customers = 1
 
 E = mean_time_between_customers*mean_service_time
 m = n_service_units
+Ts = mean_service_time
 
-above = (E**m)/(math.factorial(m))*(m/(m-E))
+#Calculate part above the line
+above = (E**m/math.factorial(m))*m/(m-E)
 
-for i in range(m-1):
-    below1 = E**i/math.factorial(i)
 
-below = below1 + E**m/math.factorial(m)*(m/(m-E))
+#Below the line
+part3 = []
+for k in range(m-1):
+    part3 = np.append(part3, (E**k/math.factorial(k)))
+#Probability of waiting
+Pw = above/(np.sum(part3)+below)
+print('-----Probability of waiting-----')
+print('Theoretical mean waiting chances are {0}'.format(Pw))
 
-Pw = above/below
+#Average waiting time
+Tw = Pw*Ts/(m*(1-E/m))
+print('-----Average waiting time-----')
+print('Theoretical average waiting time is {0}'.format(Tw))
