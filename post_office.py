@@ -2,11 +2,8 @@ from math import sqrt
 import numpy as np
 from scipy import stats
 import matplotlib.pyplot as plt
-<<<<<<< HEAD
 from collections import Counter
 import math
-=======
->>>>>>> 66dd0f3a791c60262a317ad945f05a50ac330ff2
 
 def single_queue_multiple_servers_simulation(n_customers, n_servers):
     mean_time_between_customers = 1
@@ -87,7 +84,6 @@ def calculate_confidence_intervals(mean, standard_deviation, n_simulations):
     lower = mean - z_s * (standard_deviation/sqrt(n_simulations))
     upper = mean + z_s * (standard_deviation/sqrt(n_simulations))
     return (lower, upper)
-<<<<<<< HEAD
 
 def calculate_erlang(n_service_units,mean_service_time,mean_time_between_customers):
     E = mean_time_between_customers*mean_service_time
@@ -105,17 +101,10 @@ def calculate_erlang(n_service_units,mean_service_time,mean_time_between_custome
     Tw = Pw*Ts/(m*(1-E/m))
     #Aftur orðið ekki 100% rett
     return Pw, Tw
-    
-
-def main():    
-    # Single queue multiple servers
-    waiting_times, _ = single_queue_multiple_servers_simulation(10000, 10)
-=======
 
 
 def run_simulation(simulation_to_run):
     waiting_times, _ = simulation_to_run(10000, 10)
->>>>>>> 66dd0f3a791c60262a317ad945f05a50ac330ff2
     waiting_times_strip_zeros = [i for i in waiting_times if i > 0]
     
     plt.hist(waiting_times_strip_zeros, alpha=0.5, ec="black")
