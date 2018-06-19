@@ -25,7 +25,7 @@ part3 = []
 for k in range(m-1):
     part3 = np.append(part3, (E**k/math.factorial(k)))
 #Probability of waiting
-Pw = above/(np.sum(part3)+below)
+Pw = above/(np.sum(part3)+above)
 print('-----Probability of waiting-----')
 print('Theoretical mean waiting chances are {0}'.format(Pw))
 

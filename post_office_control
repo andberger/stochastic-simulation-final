@@ -43,11 +43,11 @@ def calculate_confidence_intervals(mean, standard_deviation, n_simulations):
     upper = mean + z_s * (standard_deviation/sqrt(n_simulations))
     return (lower, upper)
 
-def calculate_erlang(n_service_units,mean_service_time,mean_time_between_customers):
-    E = mean_time_between_customers*mean_service_time
-    m = n_service_units
-    Ts = mean_service_time
+def calculate_erlang(m,Ts,A):
+    #E = mean_time_between_customers*mean_service_time
+    #m = n_service_units, #Ts = mean_service_time
     #Calculate part above the line
+    E = A*Ts
     above = (E**m/math.factorial(m))*(m/(m-E))
     #Below the line
     part3 = []
@@ -59,6 +59,18 @@ def calculate_erlang(n_service_units,mean_service_time,mean_time_between_custome
     Tw = Pw*Ts/(m*(1-E/m))
     #Aftur orðið ekki 100% rett
     return Pw, Tw
+
+def control_variate(X,Y,n):
+    #X = wait_mean, #Y = block_mean
+    meanY = np.mean(Y)
+    VarY = np.sum(Y**2)/n - (np.sum(Y)/n)**2
+    CovY = np.sum(X*Y.T)/n-(np.sum(X)/n)*np.sum(Y.T)/n
+    c = -CovY/VarY
+    Z = X + c*(Y-meanY)
+    Z_bar = np.sum(Z)/n
+    VarZ = np.sum(Z**2)/n - (np.sum(Z)/n)**2
+    return Z, Z_bar, VarZ
+    
     
 
 def main():    
@@ -98,6 +110,10 @@ def main():
     print("Theoretical probability: {}".format(Pw))
     print("Lower limit: {}".format(blocked_lower))
     print("Upper limit: {}".format(blocked_upper))
+    
+    #Control Variate Part
+    Z, Z_bar, VarZ = control_variate(wait_time_means,blocked_means,50)
+    
     
 if __name__ == "__main__":
     main()

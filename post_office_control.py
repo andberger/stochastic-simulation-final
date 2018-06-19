@@ -43,15 +43,15 @@ def calculate_confidence_intervals(mean, standard_deviation, n_simulations):
     upper = mean + z_s * (standard_deviation/sqrt(n_simulations))
     return (lower, upper)
 
-def calculate_erlang(n_service_units,mean_service_time,mean_time_between_customers):
-    E = mean_time_between_customers*mean_service_time
-    m = n_service_units
-    Ts = mean_service_time
+def calculate_erlang(m,Ts,A):
+    #E = mean_time_between_customers*mean_service_time
+    #m = n_service_units, #Ts = mean_service_time
     #Calculate part above the line
+    E = A*Ts
     above = (E**m/math.factorial(m))*(m/(m-E))
     #Below the line
     part3 = []
-    for k in range(m-1):
+    for k in range(m):
         part3 = np.append(part3, (E**k/math.factorial(k)))
     #Probability of waiting
     Pw = above/(np.sum(part3)+above)
@@ -59,6 +59,18 @@ def calculate_erlang(n_service_units,mean_service_time,mean_time_between_custome
     Tw = Pw*Ts/(m*(1-E/m))
     #Aftur orðið ekki 100% rett
     return Pw, Tw
+
+def control_variate(X,Y,n):
+    #X = wait_mean, #Y = block_mean
+    meanY = np.mean(Y)
+    VarY = np.sum(Y**2)/n - (np.sum(Y)/n)**2
+    CovY = np.sum(X*Y.T)/n-(np.sum(X)/n)*np.sum(Y.T)/n
+    c = -CovY/VarY
+    Z = X + c*(Y-meanY)
+    Z_bar = np.sum(Z)/n
+    VarZ = np.sum(Z**2)/n - (np.sum(Z)/n)**2
+    return Z, Z_bar, VarZ
+    
     
 
 def main():    
@@ -81,7 +93,8 @@ def main():
         waiting_times, n_blocked = single_queue_multiple_servers_simulation(10000, 10)
         wait_time_means.append(np.mean(waiting_times))
         blocked_means.append(np.mean(n_blocked))
-
+        #Control Variates
+        
     wait_time_lower, wait_time_upper = calculate_confidence_intervals(np.mean(wait_time_means), np.std(wait_time_means), n)
     blocked_lower, blocked_upper = calculate_confidence_intervals(np.mean(blocked_means), np.std(blocked_means), n)
     
@@ -98,6 +111,24 @@ def main():
     print("Theoretical probability: {}".format(Pw))
     print("Lower limit: {}".format(blocked_lower))
     print("Upper limit: {}".format(blocked_upper))
+    
+    #Control Variate Part
+    #Kannski a n að vera annað?
+    Z, Z_bar, VarZ = control_variate(np.array(wait_time_means),np.array(blocked_means),50)
+    WaitVar = np.sum(np.array(wait_time_means)**2)/50 - (np.sum(np.array(wait_time_means))/50)**2
+    
+    BlockVar = np.sum(np.array(blocked_means)**2)/50 - (np.sum(np.array(blocked_means))/50)**2
+    CVlower, CVupper = calculate_confidence_intervals(Z_bar,np.std(list(Z)),50)
+    
+    print("\n")
+    print("-:-:-:Control Variates:-:-:-")
+    print("Mean waiting time: {}".format(Z_bar))
+    print("Lower limit: {}".format(CVlower))
+    print("Upper limit: {}".format(CVupper))
+    print("------Variance------")
+    print("Variance: {}".format(VarZ))
+    print("Variance without control variate {}".format(WaitVar))
+    
     
 if __name__ == "__main__":
     main()
