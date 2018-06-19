@@ -20,9 +20,11 @@ def single_queue_multiple_servers_simulation(n_customers, n_servers):
         waiting_time = 0
         arrival_time = arrival_time + arrival_dist[i]
         
+        # find server with the least amount of process time left
         server = min(servers)
         server_index = servers.index(server)
         
+        # check if server is ready to process customer
         if server > arrival_time:
             waiting_time = server - arrival_time
             server = server + service_dist[i]
@@ -50,6 +52,7 @@ def multiple_queues_multiple_servers_simulation(n_customers, n_servers, assignme
         waiting_time = 0
         arrival_time = arrival_time + arrival_dist[i]
         
+        # update queues
         for s in servers:
             for c in s[1]:
                 if c[1] == 0 and c[0] + c[2] <= arrival_time:
@@ -57,6 +60,7 @@ def multiple_queues_multiple_servers_simulation(n_customers, n_servers, assignme
                 elif c[0] + c[1] <= arrival_time:
                     s[1].remove((c[0], c[1], c[2]))
         
+        # find queue to add customer to
         if assignment_strategy == "smallest":
             # Find the smallest queue
             server = min(servers, key=lambda s: len(s[1]))
@@ -65,6 +69,7 @@ def multiple_queues_multiple_servers_simulation(n_customers, n_servers, assignme
             server = servers[np.random.randint(n_servers)]
         server_index = servers.index(server)
         
+        # check if server is ready to process customer
         if server[0] > arrival_time:
             waiting_time = server[0] - arrival_time
             server[1].append((arrival_time, waiting_time, service_dist[i]))
