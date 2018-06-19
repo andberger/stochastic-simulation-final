@@ -1,10 +1,7 @@
-from math import log, floor, factorial, sqrt
-import statistics as st
-import random as random
+from math import sqrt
 import numpy as np
 from scipy import stats
 import matplotlib.pyplot as plt
-from collections import Counter
 
 def single_queue_multiple_servers_simulation(n_customers, n_servers):
     mean_time_between_customers = 1
@@ -35,17 +32,60 @@ def single_queue_multiple_servers_simulation(n_customers, n_servers):
         waiting_times.append(waiting_time)
         
     return (waiting_times, blocked)
+
+def multiple_queues_multiple_servers_simulation(n_customers, n_servers, assignment_strategy="smallest"):
+    mean_time_between_customers = 1
+    mean_service_time = 8
+    waiting_times = []
+    blocked = [0 for _ in range(n_customers)]
+    arrival_dist = stats.expon.rvs(size=n_customers, scale=mean_time_between_customers)
+    service_dist = stats.expon.rvs(size=n_customers, scale=mean_service_time)
+    
+    servers = [(0,[]) for _ in range(n_servers)]
+    arrival_time = 0
+    
+    for i in range(n_customers):
+        waiting_time = 0
+        arrival_time = arrival_time + arrival_dist[i]
+        
+        for s in servers:
+            for c in s[1]:
+                if c[1] == 0 and c[0] + c[2] <= arrival_time:
+                    s[1].remove((c[0], c[1], c[2]))
+                elif c[0] + c[1] <= arrival_time:
+                    s[1].remove((c[0], c[1], c[2]))
+        
+        if assignment_strategy == "smallest":
+            # Find the smallest queue
+            server = min(servers, key=lambda s: len(s[1]))
+        elif assignment_strategy == "random":
+            # Find a random queue
+            server = servers[np.random.randint(n_servers)]
+        server_index = servers.index(server)
+        
+        if server[0] > arrival_time:
+            waiting_time = server[0] - arrival_time
+            server[1].append((arrival_time, waiting_time, service_dist[i]))
+            server = (server[0] + service_dist[i], server[1])
+            blocked[i] = 1
+        else:
+            server[1].append((arrival_time, waiting_time, service_dist[i]))
+            server = (arrival_time + service_dist[i], server[1])
+        
+        servers[server_index] = server
+        waiting_times.append(waiting_time)
+        
+    return (waiting_times, blocked)
     
 def calculate_confidence_intervals(mean, standard_deviation, n_simulations):
     z_s = stats.t.ppf(0.95, n_simulations)
     lower = mean - z_s * (standard_deviation/sqrt(n_simulations))
     upper = mean + z_s * (standard_deviation/sqrt(n_simulations))
     return (lower, upper)
-    
 
-def main():    
-    # Single queue multiple servers    
-    waiting_times, _ = single_queue_multiple_servers_simulation(10000, 10)
+
+def run_simulation(simulation_to_run):
+    waiting_times, _ = simulation_to_run(10000, 10)
     waiting_times_strip_zeros = [i for i in waiting_times if i > 0]
     
     plt.hist(waiting_times_strip_zeros, alpha=0.5, ec="black")
@@ -60,11 +100,11 @@ def main():
     blocked_means = []
     n = 50
     for i in range(n):
-        waiting_times, n_blocked = single_queue_multiple_servers_simulation(10000, 10)
+        waiting_times, n_blocked = simulation_to_run(10000, 10)
         wait_time_means.append(np.mean(waiting_times))
         blocked_means.append(np.mean(n_blocked))
 
-    wait_time_lower, wait_time_upper = calculate_confidence_intervals(np.mean(wait_time_means), np.std(blocked_means), n)
+    wait_time_lower, wait_time_upper = calculate_confidence_intervals(np.mean(wait_time_means), np.std(wait_time_means), n)
     blocked_lower, blocked_upper = calculate_confidence_intervals(np.mean(blocked_means), np.std(blocked_means), n)
     
     print("\n")
@@ -76,6 +116,18 @@ def main():
     print("Probability of waiting: {}".format(np.mean(blocked_means)))
     print("Lower limit: {}".format(blocked_lower))
     print("Upper limit: {}".format(blocked_upper))
+    
+def run_single_queue_multiple_servers_simulation():
+    # Single queue multiple servers    
+    run_simulation(single_queue_multiple_servers_simulation)
+    
+def run_multiple_queues_multiple_servers_simulation():
+    # Multiple queues multiple servers
+    run_simulation(multiple_queues_multiple_servers_simulation)
+
+def main():
+    #run_single_queue_multiple_servers_simulation()   
+    run_multiple_queues_multiple_servers_simulation()
     
 if __name__ == "__main__":
     main()
