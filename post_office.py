@@ -20,16 +20,18 @@ def single_queue_multiple_servers_simulation(n_customers, n_servers):
         waiting_time = 0
         arrival_time = arrival_time + arrival_dist[i]
         
-        # find server with the least amount of process time left
+        # Find server with the least amount of process time left
         server = min(servers)
         server_index = servers.index(server)
         
-        # check if server is ready to process customer
+        # Check if server is ready to process customer
         if server > arrival_time:
             waiting_time = server - arrival_time
+            # Update service time
             server = server + service_dist[i]
             blocked[i] = 1
         else:
+            # Update service time
             server = arrival_time + service_dist[i]
         
         servers[server_index] = server
@@ -52,7 +54,7 @@ def multiple_queues_multiple_servers_simulation(n_customers, n_servers, assignme
         waiting_time = 0
         arrival_time = arrival_time + arrival_dist[i]
         
-        # update queues
+        # Update curent state of queues before adding a new customer
         for s in servers:
             for c in s[1]:
                 if c[1] == 0 and c[0] + c[2] <= arrival_time:
@@ -60,7 +62,7 @@ def multiple_queues_multiple_servers_simulation(n_customers, n_servers, assignme
                 elif c[0] + c[1] <= arrival_time:
                     s[1].remove((c[0], c[1], c[2]))
         
-        # find queue to add customer to
+        # Find queue to add customer to
         if assignment_strategy == "smallest":
             # Find the smallest queue
             server = min(servers, key=lambda s: len(s[1]))
@@ -69,13 +71,15 @@ def multiple_queues_multiple_servers_simulation(n_customers, n_servers, assignme
             server = servers[np.random.randint(n_servers)]
         server_index = servers.index(server)
         
-        # check if server is ready to process customer
+        # Check if server is ready to process customer
         if server[0] > arrival_time:
             waiting_time = server[0] - arrival_time
+            # Add customer to queue. Customer is represented as a triple: (arrival_time, waiting_time, serving time)
             server[1].append((arrival_time, waiting_time, service_dist[i]))
             server = (server[0] + service_dist[i], server[1])
             blocked[i] = 1
         else:
+            # Add customer to queue. Customer is represented as a triple: (arrival_time, waiting_time, serving time)
             server[1].append((arrival_time, waiting_time, service_dist[i]))
             server = (arrival_time + service_dist[i], server[1])
         
@@ -104,7 +108,7 @@ def calculate_erlang(n_service_units,mean_service_time,mean_time_between_custome
     Pw = above/(np.sum(part3)+above)
     #Average waiting time
     Tw = Pw*Ts/(m*(1-E/m))
-    #Aftur orðið ekki 100% rett
+    
     return Pw, Tw
 
 
