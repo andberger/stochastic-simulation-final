@@ -9,6 +9,8 @@ def single_queue_multiple_servers_simulation(n_customers, n_servers):
     mean_time_between_customers = 1
     mean_service_time = 8
     waiting_times = []
+    arrival_times = []
+    service_times = []
     blocked = [0 for _ in range(n_customers)]
     arrival_dist = stats.expon.rvs(size=n_customers, scale=mean_time_between_customers)
     service_dist = stats.expon.rvs(size=n_customers, scale=mean_service_time)
@@ -36,8 +38,10 @@ def single_queue_multiple_servers_simulation(n_customers, n_servers):
         
         servers[server_index] = server
         waiting_times.append(waiting_time)
+        arrival_times.append(arrival_dist[i])
+        service_times.append(service_dist[i])
         
-    return (waiting_times, blocked)
+    return (waiting_times, blocked, arrival_times, service_times)
 
 def multiple_queues_multiple_servers_simulation(n_customers, n_servers, assignment_strategy="smallest"):
     mean_time_between_customers = 1
@@ -74,19 +78,21 @@ def multiple_queues_multiple_servers_simulation(n_customers, n_servers, assignme
         # Check if server is ready to process customer
         if server[0] > arrival_time:
             waiting_time = server[0] - arrival_time
-            # Add customer to queue. Customer is represented as a triple: (arrival_time, waiting_time, serving time)
+            # Add customer to queue. 
+            # Customer is represented as a triple: (arrival_time, waiting_time, serving time)
             server[1].append((arrival_time, waiting_time, service_dist[i]))
             server = (server[0] + service_dist[i], server[1])
             blocked[i] = 1
         else:
-            # Add customer to queue. Customer is represented as a triple: (arrival_time, waiting_time, serving time)
+            # Add customer to queue.
+            # Customer is represented as a triple: (arrival_time, waiting_time, serving time)
             server[1].append((arrival_time, waiting_time, service_dist[i]))
             server = (arrival_time + service_dist[i], server[1])
         
         servers[server_index] = server
         waiting_times.append(waiting_time)
         
-    return (waiting_times, blocked)
+    return (waiting_times, blocked, [0], [0])
     
 def calculate_confidence_intervals(mean, standard_deviation, n_simulations):
     z_s = stats.t.ppf(0.95, n_simulations)
@@ -113,7 +119,7 @@ def calculate_erlang(n_service_units,mean_service_time,mean_time_between_custome
 
 
 def run_simulation(simulation_to_run):
-    waiting_times, _ = simulation_to_run(10000, 10)
+    waiting_times, _, _, _ = simulation_to_run(10000, 10)
     waiting_times_strip_zeros = [i for i in waiting_times if i > 0]
     
     plt.hist(waiting_times_strip_zeros, alpha=0.5, ec="black")
@@ -125,15 +131,23 @@ def run_simulation(simulation_to_run):
     
     # Run the simulations n times to gain statistical insights
     wait_time_means = []
+    arrival_time_means = []
+    service_time_means = []
     blocked_means = []
     n = 50
     for i in range(n):
-        waiting_times, n_blocked = simulation_to_run(10000, 10)
+        waiting_times, n_blocked, arrival_times, service_times = simulation_to_run(10000, 10)
         wait_time_means.append(np.mean(waiting_times))
+        arrival_time_means.append(np.mean(arrival_times))
+        service_time_means.append(np.mean(service_times))
         blocked_means.append(np.mean(n_blocked))
 
-    wait_time_lower, wait_time_upper = calculate_confidence_intervals(np.mean(wait_time_means), np.std(wait_time_means), n)
-    blocked_lower, blocked_upper = calculate_confidence_intervals(np.mean(blocked_means), np.std(blocked_means), n)
+    wait_time_lower, wait_time_upper = calculate_confidence_intervals(
+            np.mean(wait_time_means), np.std(wait_time_means), n)
+    blocked_lower, blocked_upper = calculate_confidence_intervals(
+            np.mean(blocked_means), np.std(blocked_means), n)
+    
+    # Compute values for linear regression
     
     Pw, Tw = calculate_erlang(10,8,1)
     
@@ -158,7 +172,7 @@ def run_multiple_queues_multiple_servers_simulation():
     run_simulation(multiple_queues_multiple_servers_simulation)
 
 def main():
-    #run_single_queue_multiple_servers_simulation()   
+    run_single_queue_multiple_servers_simulation()
     run_multiple_queues_multiple_servers_simulation()
     
 if __name__ == "__main__":
