@@ -2,7 +2,7 @@ from math import sqrt
 import numpy as np
 from scipy import stats
 import matplotlib.pyplot as plt
-from collections import Counter
+from sklearn import linear_model
 import math
 
 def single_queue_multiple_servers_simulation(n_customers, n_servers):
@@ -43,7 +43,8 @@ def single_queue_multiple_servers_simulation(n_customers, n_servers):
         
     return (waiting_times, blocked, arrival_times, service_times)
 
-def multiple_queues_multiple_servers_simulation(n_customers, n_servers, assignment_strategy="smallest"):
+def multiple_queues_multiple_servers_simulation(n_customers, n_servers):
+    assignment_strategy = "smallest"
     mean_time_between_customers = 1
     mean_service_time = 8
     waiting_times = []
@@ -147,7 +148,8 @@ def run_simulation(simulation_to_run):
     blocked_lower, blocked_upper = calculate_confidence_intervals(
             np.mean(blocked_means), np.std(blocked_means), n)
     
-    # Compute values for linear regression
+    # Compute values for linear regression    
+    linear_regression(wait_time_means, arrival_time_means, service_time_means)
     
     Pw, Tw = calculate_erlang(10,8,1)
     
@@ -163,6 +165,32 @@ def run_simulation(simulation_to_run):
     print("Lower limit: {}".format(blocked_lower))
     print("Upper limit: {}".format(blocked_upper))
     
+def linear_regression(W_mean, AT_mean, S_mean):
+    #Call in vectors with means of
+    E = (1/np.asarray(AT_mean)) * np.asarray(S_mean)#.tolist()
+    E = E.reshape(-1, 1)
+    W_mean = np.asarray(W_mean).reshape(-1, 1)
+     # Create linear regression object
+    regr = linear_model.LinearRegression()
+    # Train the model using the training sets
+    regr.fit(E, W_mean)
+
+    # Plot outputs
+    plt.scatter(E, W_mean,  color='black', s=20)
+    plt.plot(E, regr.predict(E), color='green', alpha=0.5,
+             linewidth=3)
+    plt.title('Linear Regression')
+    plt.xlabel('E')
+    plt.ylabel('Waiting time means')
+    plt.xticks(())
+    plt.yticks(())
+    
+    # The coefficients
+    print('Coefficients: \n', regr.coef_)
+    # Explained variance score: 1 is perfect prediction
+    print('Variance score: %.2f' % regr.score(E, W_mean))
+    plt.show()
+    
 def run_single_queue_multiple_servers_simulation():
     # Single queue multiple servers    
     run_simulation(single_queue_multiple_servers_simulation)
@@ -173,7 +201,7 @@ def run_multiple_queues_multiple_servers_simulation():
 
 def main():
     run_single_queue_multiple_servers_simulation()
-    run_multiple_queues_multiple_servers_simulation()
+    #run_multiple_queues_multiple_servers_simulation()
     
 if __name__ == "__main__":
     main()
