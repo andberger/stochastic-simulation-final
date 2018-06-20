@@ -184,12 +184,12 @@ def linear_regression(W_mean, AT_mean, S_mean):
     plt.ylabel('Waiting time means')
     plt.xticks(())
     plt.yticks(())
+    plt.show()
     
     # The coefficients
     print('Coefficients: \n', regr.coef_)
     # Explained variance score: 1 is perfect prediction
     print('Variance score: %.2f' % regr.score(E, W_mean))
-    plt.show()
     
 def run_single_queue_multiple_servers_simulation():
     # Single queue multiple servers    
