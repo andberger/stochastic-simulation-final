@@ -140,7 +140,7 @@ def run_simulation(simulation_to_run):
     for i in range(n):
         waiting_times, n_blocked, arrival_times, service_times = simulation_to_run(10000, 10)
         if i == 0:
-            linear_regression(waiting_times, arrival_times, service_times, "v")
+            linear_regression_var = lambda: linear_regression(waiting_times, arrival_times, service_times, "v")
         wait_time_means.append(np.mean(waiting_times))
         wait_time_variance.append(np.var(waiting_times))
         arrival_time_means.append(np.mean(arrival_times))
@@ -151,9 +151,6 @@ def run_simulation(simulation_to_run):
             np.mean(wait_time_means), np.std(wait_time_means), n)
     blocked_lower, blocked_upper = calculate_confidence_intervals(
             np.mean(blocked_means), np.std(blocked_means), n)
-    
-    # Compute values for linear regression    
-    linear_regression(wait_time_means, arrival_time_means, service_time_means)
     
     Pw, Tw = calculate_erlang(10,8,1)
     
@@ -171,6 +168,12 @@ def run_simulation(simulation_to_run):
     
     print("\n")
     print("Variance: {}".format(np.mean(wait_time_variance)))
+    
+    # Linear regression for variance reduction
+    linear_regression(wait_time_means, arrival_time_means, service_time_means)
+    linear_regression_var()
+    
+    # Control variates for variance reduction
     
 def linear_regression(W_mean, AT_mean, S_mean, compute_type = "c"):
     E = (1/np.asarray(AT_mean)) * np.asarray(S_mean)
@@ -193,13 +196,13 @@ def linear_regression(W_mean, AT_mean, S_mean, compute_type = "c"):
     
     if compute_type == "v":
         var_pred = (1 - regr.score(E, W_mean)) * np.var(W_mean)
-        print('Linear regression variance: {}'.format(var_pred))
+        print('Linear Regression Variance: {}'.format(var_pred))
     else:
         # Calculate confidence intervals
         wait_time_lower, wait_time_upper = calculate_confidence_intervals(
         np.mean(predicted), np.std(predicted), 50)
-        print("Lower limit: {}".format(wait_time_lower))
-        print("Upper limit: {}".format(wait_time_upper))
+        print("Linear Regression Lower Limit: {}".format(wait_time_lower))
+        print("Linear Regression Upper Limit: {}".format(wait_time_upper))
     
     
 def run_single_queue_multiple_servers_simulation():
