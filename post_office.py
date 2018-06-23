@@ -154,7 +154,7 @@ def linear_regression(W_mean, AT_mean, S_mean, compute_type = "c"):
     
     if compute_type == "v":
         var_pred = (1 - regr.score(E, W_mean)) * np.var(W_mean)
-        print('Linear Regression Variance: {}'.format(var_pred))
+        return var_pred
     else:
         # Calculate confidence intervals
         wait_time_lower, wait_time_upper = calculate_confidence_intervals(
@@ -180,15 +180,17 @@ def run_simulation(simulation_to_run, is_single_queue=True):
     wait_time_variance = []
     arrival_time_means = []
     service_time_means = []
+    linear_regression_vars = []
+    control_variates_vars = []
     blocked_means = []
     n = 50
     for i in range(n):
         waiting_times, n_blocked, arrival_times, service_times = simulation_to_run(10000, 10)
-        if i == 0:
-            linear_regression_var = lambda: linear_regression(
-                    waiting_times, arrival_times, service_times, "v")
-            control_variates_var = lambda: control_variate_variance(
-                    waiting_times, n_blocked)
+        if is_single_queue is True:
+            linear_regression_vars.append(linear_regression(
+                    waiting_times, arrival_times, service_times, "v"))
+            control_variates_vars.append(control_variate_variance(
+                    waiting_times, n_blocked))
         wait_time_means.append(np.mean(waiting_times))
         wait_time_variance.append(np.var(waiting_times))
         arrival_time_means.append(np.mean(arrival_times))
@@ -221,7 +223,7 @@ def run_simulation(simulation_to_run, is_single_queue=True):
     if is_single_queue is True:
         # Linear regression for variance reduction
         linear_regression(wait_time_means, arrival_time_means, service_time_means)
-        linear_regression_var()
+        print("Variance: {}".format(np.mean(linear_regression_vars)))
         
         # Control variates for variance reduction
         Z, Z_bar, VarZ = control_variate(np.array(wait_time_means),np.array(blocked_means),n)    
@@ -233,7 +235,7 @@ def run_simulation(simulation_to_run, is_single_queue=True):
         print("Lower limit: {}".format(CVlower))
         print("Upper limit: {}".format(CVupper))
         print("------Variance------")
-        print("Variance: {}".format(control_variates_var()))
+        print("Variance: {}".format(np.mean(control_variates_vars)))
     
     
 def run_single_queue_multiple_servers_simulation():
