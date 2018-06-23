@@ -132,13 +132,17 @@ def run_simulation(simulation_to_run):
     
     # Run the simulations n times to gain statistical insights
     wait_time_means = []
+    wait_time_variance = []
     arrival_time_means = []
     service_time_means = []
     blocked_means = []
     n = 50
     for i in range(n):
         waiting_times, n_blocked, arrival_times, service_times = simulation_to_run(10000, 10)
+        if i == 0:
+            linear_regression(waiting_times, arrival_times, service_times, "v")
         wait_time_means.append(np.mean(waiting_times))
+        wait_time_variance.append(np.var(waiting_times))
         arrival_time_means.append(np.mean(arrival_times))
         service_time_means.append(np.mean(service_times))
         blocked_means.append(np.mean(n_blocked))
@@ -165,31 +169,38 @@ def run_simulation(simulation_to_run):
     print("Lower limit: {}".format(blocked_lower))
     print("Upper limit: {}".format(blocked_upper))
     
-def linear_regression(W_mean, AT_mean, S_mean):
-    #Call in vectors with means of
-    E = (1/np.asarray(AT_mean)) * np.asarray(S_mean)#.tolist()
+    print("\n")
+    print("Variance: {}".format(np.mean(wait_time_variance)))
+    
+def linear_regression(W_mean, AT_mean, S_mean, compute_type = "c"):
+    E = (1/np.asarray(AT_mean)) * np.asarray(S_mean)
     E = E.reshape(-1, 1)
     W_mean = np.asarray(W_mean).reshape(-1, 1)
-     # Create linear regression object
-    regr = linear_model.LinearRegression()
-    # Train the model using the training sets
-    regr.fit(E, W_mean)
-
-    # Plot outputs
-    plt.scatter(E, W_mean,  color='black', s=20)
-    plt.plot(E, regr.predict(E), color='green', alpha=0.5,
-             linewidth=3)
-    plt.title('Linear Regression')
-    plt.xlabel('E')
-    plt.ylabel('Waiting time means')
-    plt.xticks(())
-    plt.yticks(())
-    plt.show()
     
-    # The coefficients
-    print('Coefficients: \n', regr.coef_)
-    # Explained variance score: 1 is perfect prediction
-    print('Variance score: %.2f' % regr.score(E, W_mean))
+    regr = linear_model.LinearRegression()
+    regr.fit(E, W_mean)    
+    predicted = regr.predict(E)
+    
+    if compute_type == "c":
+        plt.scatter(E, W_mean,  color='black', s=20)
+        plt.plot(E, predicted, color='green', alpha=0.5)
+        plt.title('Linear Regression')
+        plt.xlabel('E')
+        plt.ylabel('Waiting time means')
+        plt.xticks(([]))
+        plt.yticks(([]))
+        plt.show()
+    
+    if compute_type == "v":
+        var_pred = (1 - regr.score(E, W_mean)) * np.var(W_mean)
+        print('Linear regression variance: {}'.format(var_pred))
+    else:
+        # Calculate confidence intervals
+        wait_time_lower, wait_time_upper = calculate_confidence_intervals(
+        np.mean(predicted), np.std(predicted), 50)
+        print("Lower limit: {}".format(wait_time_lower))
+        print("Upper limit: {}".format(wait_time_upper))
+    
     
 def run_single_queue_multiple_servers_simulation():
     # Single queue multiple servers    
