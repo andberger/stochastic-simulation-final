@@ -164,7 +164,7 @@ def linear_regression(W_mean, AT_mean, S_mean, compute_type = "c"):
         print("Linear Regression Upper Limit: {}".format(wait_time_upper))
 
 
-def run_simulation(simulation_to_run):
+def run_simulation(simulation_to_run, is_single_queue=True):
     waiting_times, _, _, _ = simulation_to_run(10000, 10)
     waiting_times_strip_zeros = [i for i in waiting_times if i > 0]
     
@@ -218,21 +218,22 @@ def run_simulation(simulation_to_run):
     print("\n")
     print("Variance: {}".format(np.mean(wait_time_variance)))
     
-    # Linear regression for variance reduction
-    linear_regression(wait_time_means, arrival_time_means, service_time_means)
-    linear_regression_var()
-    
-    # Control variates for variance reduction
-    Z, Z_bar, VarZ = control_variate(np.array(wait_time_means),np.array(blocked_means),n)    
-    CVlower, CVupper = calculate_confidence_intervals(Z_bar,np.std(list(Z)),n)
-    
-    print("\n")
-    print("-:-:-:Control Variates:-:-:-")
-    print("Mean waiting time: {}".format(Z_bar))
-    print("Lower limit: {}".format(CVlower))
-    print("Upper limit: {}".format(CVupper))
-    print("------Variance------")
-    print("Variance: {}".format(control_variates_var()))
+    if is_single_queue is True:
+        # Linear regression for variance reduction
+        linear_regression(wait_time_means, arrival_time_means, service_time_means)
+        linear_regression_var()
+        
+        # Control variates for variance reduction
+        Z, Z_bar, VarZ = control_variate(np.array(wait_time_means),np.array(blocked_means),n)    
+        CVlower, CVupper = calculate_confidence_intervals(Z_bar,np.std(list(Z)),n)
+        
+        print("\n")
+        print("-:-:-:Control Variates:-:-:-")
+        print("Mean waiting time: {}".format(Z_bar))
+        print("Lower limit: {}".format(CVlower))
+        print("Upper limit: {}".format(CVupper))
+        print("------Variance------")
+        print("Variance: {}".format(control_variates_var()))
     
     
 def run_single_queue_multiple_servers_simulation():
@@ -241,11 +242,11 @@ def run_single_queue_multiple_servers_simulation():
     
 def run_multiple_queues_multiple_servers_simulation():
     # Multiple queues multiple servers
-    run_simulation(multiple_queues_multiple_servers_simulation)
+    run_simulation(multiple_queues_multiple_servers_simulation, False)
 
 def main():
     run_single_queue_multiple_servers_simulation()
-    #run_multiple_queues_multiple_servers_simulation()
+    run_multiple_queues_multiple_servers_simulation()
     
 if __name__ == "__main__":
     main()
