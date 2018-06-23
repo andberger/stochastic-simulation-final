@@ -185,8 +185,10 @@ def run_simulation(simulation_to_run):
     for i in range(n):
         waiting_times, n_blocked, arrival_times, service_times = simulation_to_run(10000, 10)
         if i == 0:
-            linear_regression_var = lambda: linear_regression(waiting_times, arrival_times, service_times, "v")
-            control_variates_var = lambda: control_variate_variance(waiting_times, n_blocked)
+            linear_regression_var = lambda: linear_regression(
+                    waiting_times, arrival_times, service_times, "v")
+            control_variates_var = lambda: control_variate_variance(
+                    waiting_times, n_blocked)
         wait_time_means.append(np.mean(waiting_times))
         wait_time_variance.append(np.var(waiting_times))
         arrival_time_means.append(np.mean(arrival_times))
