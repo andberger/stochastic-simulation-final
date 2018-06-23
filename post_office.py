@@ -1,6 +1,7 @@
 from math import sqrt
 import numpy as np
 from scipy import stats
+import statistics as st
 import matplotlib.pyplot as plt
 from sklearn import linear_model
 import math
@@ -118,62 +119,19 @@ def calculate_erlang(n_service_units,mean_service_time,mean_time_between_custome
     
     return Pw, Tw
 
+def control_variate(X,Y,n):
+    meanY = np.mean(Y)
+    VarY = np.sum(Y**2)/n - (np.sum(Y)/n)**2
+    CovY = np.sum(X*Y.T)/n-(np.sum(X)/n)*np.sum(Y.T)/n
+    c = -CovY/VarY
+    Z = X + c*(Y-meanY)
+    Z_bar = np.sum(Z)/n
+    VarZ = np.sum(Z**2)/n - (np.sum(Z)/n)**2
+    return Z, Z_bar, VarZ
 
-def run_simulation(simulation_to_run):
-    waiting_times, _, _, _ = simulation_to_run(10000, 10)
-    waiting_times_strip_zeros = [i for i in waiting_times if i > 0]
-    
-    plt.hist(waiting_times_strip_zeros, alpha=0.5, ec="black")
-    plt.title("Distribution of waiting times")
-    plt.legend(loc='upper right')
-    plt.xlabel("Waiting times")
-    plt.ylabel("Frequency")
-    plt.show()
-    
-    # Run the simulations n times to gain statistical insights
-    wait_time_means = []
-    wait_time_variance = []
-    arrival_time_means = []
-    service_time_means = []
-    blocked_means = []
-    n = 50
-    for i in range(n):
-        waiting_times, n_blocked, arrival_times, service_times = simulation_to_run(10000, 10)
-        if i == 0:
-            linear_regression_var = lambda: linear_regression(waiting_times, arrival_times, service_times, "v")
-        wait_time_means.append(np.mean(waiting_times))
-        wait_time_variance.append(np.var(waiting_times))
-        arrival_time_means.append(np.mean(arrival_times))
-        service_time_means.append(np.mean(service_times))
-        blocked_means.append(np.mean(n_blocked))
-
-    wait_time_lower, wait_time_upper = calculate_confidence_intervals(
-            np.mean(wait_time_means), np.std(wait_time_means), n)
-    blocked_lower, blocked_upper = calculate_confidence_intervals(
-            np.mean(blocked_means), np.std(blocked_means), n)
-    
-    Pw, Tw = calculate_erlang(10,8,1)
-    
-    print("\n")
-    print("Mean waiting time: {}".format(np.mean(wait_time_means)))
-    print("Theoretical mean: {}".format(Tw))
-    print("Lower limit: {}".format(wait_time_lower))
-    print("Upper limit: {}".format(wait_time_upper))
-
-    print("\n")
-    print("Probability of waiting: {}".format(np.mean(blocked_means)))
-    print("Theoretical probability: {}".format(Pw))
-    print("Lower limit: {}".format(blocked_lower))
-    print("Upper limit: {}".format(blocked_upper))
-    
-    print("\n")
-    print("Variance: {}".format(np.mean(wait_time_variance)))
-    
-    # Linear regression for variance reduction
-    linear_regression(wait_time_means, arrival_time_means, service_time_means)
-    linear_regression_var()
-    
-    # Control variates for variance reduction
+def control_variate_variance(X,Y):
+    var_Z = np.var(X) - ((np.cov(X,Y)[1][0] ** 2)/np.var(Y))
+    return var_Z
     
 def linear_regression(W_mean, AT_mean, S_mean, compute_type = "c"):
     E = (1/np.asarray(AT_mean)) * np.asarray(S_mean)
@@ -201,8 +159,78 @@ def linear_regression(W_mean, AT_mean, S_mean, compute_type = "c"):
         # Calculate confidence intervals
         wait_time_lower, wait_time_upper = calculate_confidence_intervals(
         np.mean(predicted), np.std(predicted), 50)
+        print("-:-:-:Linear Regression:-:-:-")
         print("Linear Regression Lower Limit: {}".format(wait_time_lower))
         print("Linear Regression Upper Limit: {}".format(wait_time_upper))
+
+
+def run_simulation(simulation_to_run):
+    waiting_times, _, _, _ = simulation_to_run(10000, 10)
+    waiting_times_strip_zeros = [i for i in waiting_times if i > 0]
+    
+    plt.hist(waiting_times_strip_zeros, alpha=0.5, ec="black")
+    plt.title("Distribution of waiting times")
+    plt.legend(loc='upper right')
+    plt.xlabel("Waiting times")
+    plt.ylabel("Frequency")
+    plt.show()
+    
+    # Run the simulations n times to gain statistical insights
+    wait_time_means = []
+    wait_time_variance = []
+    arrival_time_means = []
+    service_time_means = []
+    blocked_means = []
+    n = 50
+    for i in range(n):
+        waiting_times, n_blocked, arrival_times, service_times = simulation_to_run(10000, 10)
+        if i == 0:
+            linear_regression_var = lambda: linear_regression(waiting_times, arrival_times, service_times, "v")
+            control_variates_var = lambda: control_variate_variance(waiting_times, n_blocked)
+        wait_time_means.append(np.mean(waiting_times))
+        wait_time_variance.append(np.var(waiting_times))
+        arrival_time_means.append(np.mean(arrival_times))
+        service_time_means.append(np.mean(service_times))
+        blocked_means.append(np.mean(n_blocked))
+
+    wait_time_lower, wait_time_upper = calculate_confidence_intervals(
+            np.mean(wait_time_means), np.std(wait_time_means), n)
+    blocked_lower, blocked_upper = calculate_confidence_intervals(
+            np.mean(blocked_means), np.std(blocked_means), n)
+    
+    Pw, Tw = calculate_erlang(10,8,1)
+    
+    print("\n")
+    print("-:-:-:Statistical Values:-:-:-")
+    print("Mean waiting time: {}".format(np.mean(wait_time_means)))
+    print("Theoretical mean: {}".format(Tw))
+    print("Lower limit: {}".format(wait_time_lower))
+    print("Upper limit: {}".format(wait_time_upper))
+
+    print("\n")
+    print("Probability of waiting: {}".format(np.mean(blocked_means)))
+    print("Theoretical probability: {}".format(Pw))
+    print("Lower limit: {}".format(blocked_lower))
+    print("Upper limit: {}".format(blocked_upper))
+    
+    print("\n")
+    print("Variance: {}".format(np.mean(wait_time_variance)))
+    
+    # Linear regression for variance reduction
+    linear_regression(wait_time_means, arrival_time_means, service_time_means)
+    linear_regression_var()
+    
+    # Control variates for variance reduction
+    Z, Z_bar, VarZ = control_variate(np.array(wait_time_means),np.array(blocked_means),n)    
+    CVlower, CVupper = calculate_confidence_intervals(Z_bar,np.std(list(Z)),n)
+    
+    print("\n")
+    print("-:-:-:Control Variates:-:-:-")
+    print("Mean waiting time: {}".format(Z_bar))
+    print("Lower limit: {}".format(CVlower))
+    print("Upper limit: {}".format(CVupper))
+    print("------Variance------")
+    print("Variance: {}".format(control_variates_var()))
     
     
 def run_single_queue_multiple_servers_simulation():
